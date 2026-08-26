@@ -1,23 +1,22 @@
 package com.ecommerce.project.service;
 
+import com.ecommerce.project.dto.UpdateCategoryRequest;
 import com.ecommerce.project.models.Category;
 import com.ecommerce.project.repositories.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
-    List<Category> categories = new ArrayList<>();
-    private long id = 1L;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     @Override
     public List<Category> getAllCategories() {
@@ -42,17 +41,25 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category updateCategory(long id, Category category) {
-        Optional<Category> updatedCategory = categoryRepository.findById(id);
-        if(updatedCategory.isPresent()){
-            Category c = updatedCategory.get();
-            c.setName(category.getName());
-            c.setDescription(category.getDescription());
-            categoryRepository.save(c);
-            return c;
-        } else{
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id of the category doesn't exist");
+    @Transactional
+    public Category updateCategory(long id, UpdateCategoryRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Category not found: " + id));
+
+        if (request.name() == null && request.description() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "At least one updatable field must be supplied");
         }
+
+        if (request.name() != null) {
+            category.setName(request.name());
+        }
+        if (request.description() != null) {
+            category.setDescription(request.description());
+        }
+
+        return category;
     }
 
 }

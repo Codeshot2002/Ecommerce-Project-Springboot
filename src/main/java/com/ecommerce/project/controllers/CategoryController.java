@@ -1,6 +1,7 @@
 package com.ecommerce.project.controllers;
 
 import com.ecommerce.project.models.Category;
+import com.ecommerce.project.dto.UpdateCategoryRequest;
 import com.ecommerce.project.service.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 public class CategoryController {
@@ -24,7 +26,6 @@ public class CategoryController {
 
     @PostMapping("/api/public/categories")
     public Category createCategory(@RequestBody Category category) {
-        System.out.println(category.getId());
         return service.addCategory(category);
     }
 
@@ -38,13 +39,9 @@ public class CategoryController {
         }
     }
 
-    @PutMapping ("/api/public/categories/{id}")
-    public ResponseEntity<String> updateCategory(@PathVariable long id, @RequestBody Category category) {
-        try{
-            Category updatedCategory = service.updateCategory(id, category);
-            return new ResponseEntity<>("Updated category of Id : " + id, HttpStatus.OK);
-        } catch (ResponseStatusException e){
-            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
-        }
+    @PatchMapping("/api/public/categories/{id}")
+    public Category updateCategory(@PathVariable long id,
+                                   @Valid @RequestBody UpdateCategoryRequest category) {
+        return service.updateCategory(id, category);
     }
 }
