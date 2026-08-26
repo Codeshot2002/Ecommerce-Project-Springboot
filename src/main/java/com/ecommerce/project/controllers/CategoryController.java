@@ -24,6 +24,7 @@ public class CategoryController {
 
     @PostMapping("/api/public/categories")
     public Category createCategory(@RequestBody Category category) {
+        System.out.println(category.getId());
         return service.addCategory(category);
     }
 
