@@ -1,5 +1,6 @@
 package com.ecommerce.project.models;
 
+import com.ecommerce.project.Enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private OrderStatus status = OrderStatus.PENDING;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -29,15 +32,4 @@ public class Order {
         orderItem.setOrder(this);
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
-    }
 }
