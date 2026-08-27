@@ -1,4 +1,4 @@
-package com.ecommerce.project.global;
+package com.ecommerce.project.exceptions;
 
 
 import org.springframework.http.ResponseEntity;

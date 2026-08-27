@@ -1,10 +1,9 @@
 package com.ecommerce.project.repositories;
 
-import com.ecommerce.project.models.Category;
+import com.ecommerce.project.models.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category,Long> {
-
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 }

@@ -3,6 +3,7 @@ package com.ecommerce.project.controllers;
 import com.ecommerce.project.models.Category;
 import com.ecommerce.project.dto.UpdateCategoryRequest;
 import com.ecommerce.project.service.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +14,9 @@ import jakarta.validation.Valid;
 
 @RestController
 public class CategoryController {
+    @Autowired
     private CategoryService service;
 
-    public CategoryController(CategoryService categoryService) {
-        this.service = categoryService;
-    }
 
     @GetMapping("/api/public/categories")
     public List<Category> getAllCategories() {
