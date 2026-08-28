@@ -52,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
                         order.getOrderItems().stream()
                                 .map(item -> new OrderItemResponse(
                                         item.getProduct().getId(), item.getQuantity()))
-                                .toList()))
+                                .toList(), order.getStatus()))
                 .toList();
     }
 
@@ -83,10 +83,14 @@ public class OrderServiceImpl implements OrderService {
         OrderCreatedEvent event = new OrderCreatedEvent(
                 UUID.randomUUID(),
                 savedOrder.getId(),
-                null,
+                1L,
                 Instant.now()
         );
-        orderEventProducer.publishOrderCreated(event);
+        try {
+            orderEventProducer.publishOrderCreated(event);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
 
         return new PlaceOrderResponse(savedOrder.getId(), "Order placed successfully");
     }
