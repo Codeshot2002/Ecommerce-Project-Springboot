@@ -5,6 +5,8 @@ import com.ecommerce.project.dto.PlaceOrderRequest;
 import com.ecommerce.project.dto.PlaceOrderResponse;
 import com.ecommerce.project.dto.OrderItemResponse;
 import com.ecommerce.project.dto.OrderResponse;
+import com.ecommerce.project.events.OrderCreatedEvent;
+import com.ecommerce.project.kafka.producer.OrderEventProducer;
 import com.ecommerce.project.models.Order;
 import com.ecommerce.project.models.OrderItem;
 import com.ecommerce.project.repositories.OrderItemRepository;
@@ -15,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -23,12 +27,15 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
+    private final OrderEventProducer orderEventProducer;
+
     public OrderServiceImpl(OrderItemRepository orderItemRepository,
                             OrderRepository orderRepository,
-                            ProductRepository productRepository) {
+                            ProductRepository productRepository, OrderEventProducer orderEventProducer) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.orderEventProducer = orderEventProducer;
     }
 
     @Override
@@ -45,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
                         order.getOrderItems().stream()
                                 .map(item -> new OrderItemResponse(
                                         item.getProduct().getId(), item.getQuantity()))
-                                .toList()))
+                                .toList(), order.getStatus()))
                 .toList();
     }
 
@@ -72,6 +79,19 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order savedOrder = orderRepository.save(order);
+        // Kafka event creation for order placed
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                UUID.randomUUID(),
+                savedOrder.getId(),
+                1L,
+                Instant.now()
+        );
+        try {
+            orderEventProducer.publishOrderCreated(event);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+
         return new PlaceOrderResponse(savedOrder.getId(), "Order placed successfully");
     }
 }
