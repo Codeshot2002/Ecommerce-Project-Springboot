@@ -23,12 +23,12 @@ public class CategoryController {
        return service.getAllCategories();
     }
 
-    @PostMapping("/api/public/categories")
+    @PostMapping("/api/admin/categories")
     public Category createCategory(@RequestBody Category category) {
         return service.addCategory(category);
     }
 
-    @DeleteMapping("/api/public/categories/{id}")
+    @DeleteMapping("/api/admin/categories/{id}")
     public ResponseEntity<String> deleteCategory(@PathVariable long id) {
         try{
             String response = service.deleteCategory(id);
@@ -38,7 +38,7 @@ public class CategoryController {
         }
     }
 
-    @PatchMapping("/api/public/categories/{id}")
+    @PatchMapping("/api/admin/categories/{id}")
     public Category updateCategory(@PathVariable long id,
                                    @Valid @RequestBody UpdateCategoryRequest category) {
         return service.updateCategory(id, category);

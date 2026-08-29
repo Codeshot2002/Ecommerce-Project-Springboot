@@ -21,17 +21,17 @@ public class ProductController {
         return productService.getAllProducts(id, categoryId);
     }
 
-    @PostMapping("/api/public/products")
+    @PostMapping("/api/admin/products")
     public Product addProduct(@Valid @RequestBody Product product) {
         return productService.addProduct(product);
     }
 
-    @PatchMapping("/api/public/products")
+    @PatchMapping("/api/admin/products")
     public ResponseEntity<String> updateProduct(@RequestBody Product product, @RequestParam long id) {
         return productService.updateProduct(product,id);
     }
 
-    @DeleteMapping("/api/private/products")
+    @DeleteMapping("/api/admin/products")
     public ResponseEntity<String> deleteProduct(@RequestParam long id) {
         return productService.deleteProduct(id);
     }

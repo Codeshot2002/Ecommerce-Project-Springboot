@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -21,15 +22,17 @@ public class OrderController {
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
     }
+
     @GetMapping("/api/orders")
-    public List<OrderResponse> getAllOrders() {
-        return orderService.getAllOrders();
+    public List<OrderResponse> getAllOrders(Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return orderService.getAllOrders(authentication.getName(), isAdmin);
     }
 
     @PostMapping("/api/orders")
     public ResponseEntity<PlaceOrderResponse> placeOrder(
-            @Valid @RequestBody PlaceOrderRequest request) {
-        PlaceOrderResponse response = orderService.placeOrder(request);
+            @Valid @RequestBody PlaceOrderRequest request, Authentication authentication) {
+        PlaceOrderResponse response = orderService.placeOrder(request, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
