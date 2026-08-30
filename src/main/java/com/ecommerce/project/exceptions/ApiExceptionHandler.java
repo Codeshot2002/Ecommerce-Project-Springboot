@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ApiError> handleOptimisticLock(
@@ -42,7 +45,7 @@ public class ApiExceptionHandler {
             Exception exception,
             HttpServletRequest request) {
 
-        // Log exception here; do not expose internal details to clients.
+        log.error("Unhandled request failure for {} {}", request.getMethod(), request.getRequestURI(), exception);
         return error(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected server error occurred.",

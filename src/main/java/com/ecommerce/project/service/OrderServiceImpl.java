@@ -12,6 +12,8 @@ import com.ecommerce.project.models.OrderItem;
 import com.ecommerce.project.repositories.OrderItemRepository;
 import com.ecommerce.project.repositories.OrderRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import com.ecommerce.project.repositories.UserRepository;
+import com.ecommerce.project.models.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,15 +28,17 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     private final OrderEventProducer orderEventProducer;
 
     public OrderServiceImpl(OrderItemRepository orderItemRepository,
                             OrderRepository orderRepository,
-                            ProductRepository productRepository, OrderEventProducer orderEventProducer) {
+                            ProductRepository productRepository, UserRepository userRepository, OrderEventProducer orderEventProducer) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
         this.orderEventProducer = orderEventProducer;
     }
 
@@ -45,8 +49,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream()
+    public List<OrderResponse> getAllOrders(String email, boolean isAdmin) {
+        User customer = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required"));
+        List<Order> orders = isAdmin ? orderRepository.findAll() : orderRepository.findByCustomerOrderByIdDesc(customer);
+        return orders.stream()
                 .map(order -> new OrderResponse(
                         order.getId(),
                         order.getOrderItems().stream()
@@ -58,8 +64,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public PlaceOrderResponse placeOrder(PlaceOrderRequest request) {
+    public PlaceOrderResponse placeOrder(PlaceOrderRequest request, String email) {
         Order order = new Order();
+        order.setCustomer(userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required")));
 
         for (PlaceOrderItemRequest requestedItem : request.items()) {
             int changedRows = productRepository.decreaseQuantityIfAvailable(
@@ -83,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
         OrderCreatedEvent event = new OrderCreatedEvent(
                 UUID.randomUUID(),
                 savedOrder.getId(),
-                1L,
+                savedOrder.getCustomer().getId(),
                 Instant.now()
         );
         try {
