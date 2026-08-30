@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface OrderService {
     public List<OrderItem> getAllOrderItems(Long orderId, Long categoryId, Long productId);
-    List<OrderResponse> getAllOrders();
-    PlaceOrderResponse placeOrder(PlaceOrderRequest request);
+    List<OrderResponse> getAllOrders(String email, boolean isAdmin);
+    PlaceOrderResponse placeOrder(PlaceOrderRequest request, String email);
 }
