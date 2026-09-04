@@ -1,19 +1,16 @@
 package com.ecommerce.project.service;
 
-import com.ecommerce.project.dto.PlaceOrderItemRequest;
-import com.ecommerce.project.dto.PlaceOrderRequest;
-import com.ecommerce.project.dto.PlaceOrderResponse;
-import com.ecommerce.project.dto.OrderItemResponse;
-import com.ecommerce.project.dto.OrderResponse;
+import com.ecommerce.project.dto.*;
 import com.ecommerce.project.events.OrderCreatedEvent;
 import com.ecommerce.project.kafka.producer.OrderEventProducer;
 import com.ecommerce.project.models.Order;
 import com.ecommerce.project.models.OrderItem;
+import com.ecommerce.project.models.Product;
+import com.ecommerce.project.models.User;
 import com.ecommerce.project.repositories.OrderItemRepository;
 import com.ecommerce.project.repositories.OrderRepository;
 import com.ecommerce.project.repositories.ProductRepository;
 import com.ecommerce.project.repositories.UserRepository;
-import com.ecommerce.project.models.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +18,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -52,12 +53,20 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getAllOrders(String email, boolean isAdmin) {
         User customer = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required"));
         List<Order> orders = isAdmin ? orderRepository.findAll() : orderRepository.findByCustomerOrderByIdDesc(customer);
+        List<Long> productIds = orders.stream().flatMap(x -> x.getOrderItems().stream()).map(orderItem -> orderItem.getProduct().getId()).toList();
+        Map<Long, Product> productById = productRepository.findAllById(productIds).stream().collect(Collectors.toMap(Product::getId, Function.identity()));
         return orders.stream()
                 .map(order -> new OrderResponse(
                         order.getId(),
                         order.getOrderItems().stream()
-                                .map(item -> new OrderItemResponse(
-                                        item.getProduct().getId(), item.getQuantity()))
+                                .map(orderItem -> {
+                                    Product product = productById.get(orderItem.getProduct().getId());
+                                    if (product == null) {
+                                        return null;
+                                    } else {
+                                        return new OrderItemResponse(product.getId(), product.getName(), orderItem.getQuantity());
+                                    }
+                                }).filter(Objects::nonNull)
                                 .toList(), order.getStatus()))
                 .toList();
     }
