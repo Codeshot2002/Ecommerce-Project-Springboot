@@ -136,11 +136,6 @@
             <version>2.8.5</version> <!-- Use the latest stable v2.x version -->
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
     </dependencies>
 
 	<build>
